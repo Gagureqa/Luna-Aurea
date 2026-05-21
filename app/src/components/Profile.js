@@ -4,18 +4,18 @@ import { useAuth } from '../context/AuthContext';
 import { useModal } from '../context/ModalContext';
 
 const Profile = () => {
-  const { 
-    user, 
-    logout, 
-    cart, 
-    removeFromCart, 
-    favorites, 
-    removeFromFavorites, 
-    orders, 
-    createOrder, 
-    cancelOrder 
+  const {
+    user,
+    logout,
+    cart,
+    removeFromCart,
+    favorites,
+    removeFromFavorites,
+    orders,
+    createOrder,
+    cancelOrder
   } = useAuth(); // ✅ Добавляем недостающие функции
-  
+
   const { showModal } = useModal();
   const navigate = useNavigate();
   const location = useLocation();
@@ -30,7 +30,7 @@ const Profile = () => {
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const tab = searchParams.get('tab');
-    
+
     if (tab && ['cart', 'favorites', 'orders'].includes(tab)) {
       setActiveTab(tab);
     } else {
@@ -75,23 +75,23 @@ const Profile = () => {
     }
 
     setIsSubmitting(true);
-    
+
     try {
       // Имитация обработки заказа
       await new Promise(resolve => setTimeout(resolve, 1500));
-      
+
       // ✅ Используем createOrder из AuthContext
       const order = createOrder(checkoutData);
-      
+
       // Сбрасываем форму
       setCheckoutData({
         cardNumber: '',
         address: ''
       });
-      
+
       // ✅ Показываем модальное окно успешного заказа
       showModal('order-success', null, 'Заказ успешно оформлен!', order);
-      
+
     } catch (error) {
       alert('Произошла ошибка при оформлении заказа');
     } finally {
@@ -121,7 +121,7 @@ const Profile = () => {
     return (
       <div className="max-w-md mx-auto mt-16 p-8 text-center">
         <p className="text-lg mb-4">Пожалуйста, войдите в систему</p>
-        <button 
+        <button
           onClick={goToCatalog}
           className="bg-gold-600 text-white px-6 py-3 rounded hover:bg-gold-700"
         >
@@ -145,15 +145,14 @@ const Profile = () => {
             <button
               key={tab}
               onClick={() => handleTabChange(tab)}
-              className={`pb-4 px-2 capitalize ${
-                activeTab === tab 
-                  ? 'border-b-2 border-gold-600 text-gold-600 font-semibold' 
+              className={`pb-4 px-2 capitalize ${activeTab === tab
+                  ? 'border-b-2 border-gold-600 text-gold-600 font-semibold'
                   : 'text-gray-500 hover:text-gray-700'
-              }`}
+                }`}
             >
-              {tab === 'profile' ? 'Профиль' : 
-               tab === 'cart' ? 'Корзина' : 
-               tab === 'favorites' ? 'Понравилось' : 'Мои заказы'}
+              {tab === 'profile' ? 'Профиль' :
+                tab === 'cart' ? 'Корзина' :
+                  tab === 'favorites' ? 'Понравилось' : 'Мои заказы'}
             </button>
           ))}
         </div>
@@ -167,6 +166,7 @@ const Profile = () => {
             <div className="space-y-3">
               <p><strong>Имя пользователя:</strong> {user.username || 'Пользователь'}</p>
               <p><strong>Email:</strong> {user.email || 'Не указан'}</p>
+              <p><strong>Дата регистрации:</strong> {user?.created_at ? String(user.created_at).split(' ')[0].split('-').reverse().join('.') : 'Неизвестно'}</p>
             </div>
             <button
               onClick={() => {
@@ -187,7 +187,7 @@ const Profile = () => {
           {!cart || cart.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-xl text-gray-500 mb-4">Корзина пуста</p>
-              <button 
+              <button
                 onClick={goToCatalog}
                 className="bg-gold-600 text-white px-6 py-3 rounded hover:bg-gold-700"
               >
@@ -202,14 +202,14 @@ const Profile = () => {
                 <div className="space-y-4">
                   {cart.map(item => (
                     <div key={item.id} className="flex items-center bg-white rounded-lg shadow-md p-4">
-                      <img 
+                      <img
                         src={getProductImage(item)}
                         alt={item.name}
                         className="w-20 h-20 object-cover rounded cursor-pointer"
                         onClick={() => goToProduct(item.id)}
                       />
                       <div className="ml-4 flex-grow">
-                        <h3 
+                        <h3
                           className="font-semibold cursor-pointer hover:text-gold-600"
                           onClick={() => goToProduct(item.id)}
                         >
@@ -240,7 +240,7 @@ const Profile = () => {
                         type="text"
                         placeholder="1234 5678 9012 3456"
                         value={checkoutData.cardNumber}
-                        onChange={(e) => setCheckoutData({...checkoutData, cardNumber: e.target.value})}
+                        onChange={(e) => setCheckoutData({ ...checkoutData, cardNumber: e.target.value })}
                         className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-gold-500"
                         required
                         maxLength="19"
@@ -251,7 +251,7 @@ const Profile = () => {
                       <textarea
                         placeholder="Введите полный адрес доставки"
                         value={checkoutData.address}
-                        onChange={(e) => setCheckoutData({...checkoutData, address: e.target.value})}
+                        onChange={(e) => setCheckoutData({ ...checkoutData, address: e.target.value })}
                         className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-gold-500"
                         rows="3"
                         required
@@ -266,11 +266,10 @@ const Profile = () => {
                     <button
                       type="submit"
                       disabled={isSubmitting || !cart || cart.length === 0}
-                      className={`w-full py-3 rounded-lg font-semibold transition-all ${
-                        isSubmitting || !cart || cart.length === 0
+                      className={`w-full py-3 rounded-lg font-semibold transition-all ${isSubmitting || !cart || cart.length === 0
                           ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                           : 'bg-gold-600 hover:bg-gold-700 text-white shadow-lg hover:shadow-xl'
-                      }`}
+                        }`}
                     >
                       {isSubmitting ? (
                         <div className="flex items-center justify-center">
@@ -278,7 +277,7 @@ const Profile = () => {
                           ОФОРМЛЕНИЕ...
                         </div>
                       ) : (
-                         ' ОФОРМИТЬ ЗАКАЗ'
+                        ' ОФОРМИТЬ ЗАКАЗ'
                       )}
                     </button>
                   </div>
@@ -296,7 +295,7 @@ const Profile = () => {
           {!favorites || favorites.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-xl text-gray-500 mb-4">В избранном пока ничего нет</p>
-              <button 
+              <button
                 onClick={goToCatalog}
                 className="bg-gold-600 text-white px-6 py-3 rounded hover:bg-gold-700"
               >
@@ -307,14 +306,14 @@ const Profile = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {favorites.map(item => (
                 <div key={item.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                  <img 
+                  <img
                     src={getProductImage(item)}
                     alt={item.name}
                     className="w-full h-64 object-cover cursor-pointer"
                     onClick={() => goToProduct(item.id)}
                   />
                   <div className="p-4">
-                    <h3 
+                    <h3
                       className="font-semibold text-lg mb-2 cursor-pointer hover:text-gold-600"
                       onClick={() => goToProduct(item.id)}
                     >
@@ -351,7 +350,7 @@ const Profile = () => {
           {!orders || orders.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-500 mb-4">У вас еще нет заказов</p>
-              <button 
+              <button
                 onClick={() => handleTabChange('cart')}
                 className="bg-gold-600 text-white px-6 py-3 rounded hover:bg-gold-700"
               >
@@ -383,7 +382,7 @@ const Profile = () => {
                         )}
                       </div>
                     </div>
-                    
+
                     <div className="mb-4">
                       <p><strong>Адрес доставки:</strong> {order.address}</p>
                       <p><strong>Карта:</strong> **** {order.cardNumber?.slice(-4)}</p>
@@ -395,7 +394,7 @@ const Profile = () => {
                       <div className="space-y-3">
                         {order.items?.map(item => (
                           <div key={item.id} className="flex items-center">
-                            <img 
+                            <img
                               src={getProductImage(item)}
                               alt={item.name}
                               className="w-12 h-12 object-cover rounded"
