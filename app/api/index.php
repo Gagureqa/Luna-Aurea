@@ -35,6 +35,7 @@ function getUserFromToken() {
     return $payload;
 }
 
+// ---------- Публичные маршруты ----------
 if ($route === 'dbstatus') {
     echo json_encode(['connected' => $dbConnected, 'message' => $dbConnected ? 'Database connected' : 'Database NOT connected']);
     exit;
@@ -70,7 +71,7 @@ if ($route === 'login') {
     try {
         $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?"); $stmt->execute([$email]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        if (!$user || !password_verify($password, $user['password'])) { echo json_encode(['error' => ' Не верный Логин/Пароль или Вы не зарегистрированы']); exit; }
+        if (!$user || !password_verify($password, $user['password'])) { echo json_encode(['error' => 'Неверный логин/пароль или вы не зарегистрированы']); exit; }
         $stmt = $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = ?"); $stmt->execute([$user['id']]);
         $token = base64_encode(json_encode(['id' => $user['id'], 'email' => $user['email']]));
         $userCart = !empty($user['cart']) ? json_decode($user['cart'], true) : [];
@@ -81,6 +82,7 @@ if ($route === 'login') {
     exit;
 }
 
+// ---------- Защищённые маршруты ----------
 $payload = getUserFromToken();
 if (!$payload) { echo json_encode(['error' => 'Unauthorized']); exit; }
 $userId = $payload['id'];
@@ -132,11 +134,71 @@ if ($route === 'orders' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt = $pdo->prepare("SELECT orders FROM users WHERE id = ?"); $stmt->execute([$userId]);
     $currentOrders = $stmt->fetchColumn();
     $ordersArray = $currentOrders ? json_decode($currentOrders, true) : [];
-    $newOrder = ['id' => count($ordersArray) + 1, 'date' => date('Y-m-d H:i:s'), 'items' => $input['items'] ?? [], 'total' => $input['total'] ?? 0, 'status' => 'processing', 'address' => $input['address'] ?? '', 'phone' => $input['phone'] ?? '', 'payment' => $input['payment'] ?? 'card'];
+    // Сохраняем ID, который прислал фронт (строка)
+    $newOrderId = isset($input['id']) ? (string)$input['id'] : (string)time();
+    $newOrder = [
+        'id' => $newOrderId,
+        'date' => $input['date'] ?? date('Y-m-d H:i:s'),
+        'items' => $input['items'] ?? [],
+        'total' => $input['total'] ?? 0,
+        'status' => 'pending',
+        'address' => $input['address'] ?? '',
+        'phone' => $input['phone'] ?? '',
+        'payment' => $input['payment'] ?? 'card',
+        'cardNumber' => $input['cardNumber'] ?? ''
+    ];
     $ordersArray[] = $newOrder;
     $stmt = $pdo->prepare("UPDATE users SET orders = ? WHERE id = ?");
     $stmt->execute([json_encode($ordersArray, JSON_UNESCAPED_UNICODE), $userId]);
     echo json_encode(['success' => true, 'order' => $newOrder]);
+    exit;
+}
+
+// ---------- ОТМЕНА ЗАКАЗА (исправленное сравнение) ----------
+if ($route === 'cancel-order' && $_SERVER['REQUEST_METHOD'] === 'PUT') {
+    if (!$dbConnected) {
+        echo json_encode(['error' => 'База данных недоступна']);
+        exit;
+    }
+    $input = json_decode(file_get_contents('php://input'), true);
+    $orderId = $input['orderId'] ?? null;
+    if (!$orderId) {
+        echo json_encode(['error' => 'Не указан ID заказа']);
+        exit;
+    }
+    $orderIdStr = (string)$orderId;
+    
+    $stmt = $pdo->prepare("SELECT orders FROM users WHERE id = ?");
+    $stmt->execute([$userId]);
+    $currentOrders = $stmt->fetchColumn();
+    $ordersArray = $currentOrders ? json_decode($currentOrders, true) : [];
+    
+    $found = false;
+    foreach ($ordersArray as &$order) {
+        // Сравниваем как строки, чтобы работали и числа, и строки
+        if ((string)$order['id'] === $orderIdStr) {
+            if ($order['status'] === 'cancelled') {
+                echo json_encode(['error' => 'Заказ уже отменён']);
+                exit;
+            }
+            if ($order['status'] !== 'pending' && $order['status'] !== 'processing') {
+                echo json_encode(['error' => 'Невозможно отменить заказ, который уже обрабатывается или отправлен']);
+                exit;
+            }
+            $order['status'] = 'cancelled';
+            $found = true;
+            break;
+        }
+    }
+    
+    if (!$found) {
+        echo json_encode(['error' => 'Заказ не найден']);
+        exit;
+    }
+    
+    $stmt = $pdo->prepare("UPDATE users SET orders = ? WHERE id = ?");
+    $stmt->execute([json_encode($ordersArray, JSON_UNESCAPED_UNICODE), $userId]);
+    echo json_encode(['success' => true, 'message' => 'Заказ отменён']);
     exit;
 }
 

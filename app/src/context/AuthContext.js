@@ -8,7 +8,7 @@ export const useAuth = () => {
   if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 };
-
+//Состояния (user, token, cart, favorites, orders, loading)
 export const AuthProvider = ({ children }) => {
   const { showModal } = useModal();
   const [user, setUser] = useState(null);
@@ -25,8 +25,6 @@ export const AuthProvider = ({ children }) => {
     if (product.image) return { ...product, images: [product.image] };
     return { ...product, images: ['/images/placeholder.jpg'] };
   };
-
-  // ========== СОХРАНЕНИЕ НА СЕРВЕР (через ?token=) ==========
 
   const saveCartToServer = useCallback(async (cartItems) => {
     if (!token) return;
@@ -83,9 +81,7 @@ export const AuthProvider = ({ children }) => {
       console.error('Ошибка загрузки заказов:', err);
     }
   }, []);
-
-  // ========== АВТОРИЗАЦИЯ ==========
-
+//Функция register(userData)
   const register = useCallback(async (userData) => {
     try {
       const url = `${API_URL}?route=register&username=${encodeURIComponent(userData.username)}&email=${encodeURIComponent(userData.email)}&password=${encodeURIComponent(userData.password)}`;
@@ -107,7 +103,7 @@ export const AuthProvider = ({ children }) => {
       throw error;
     }
   }, []);
-
+//Функция login(email, password)
   const login = useCallback(async (email, password) => {
     try {
       const url = `${API_URL}?route=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
@@ -137,14 +133,12 @@ export const AuthProvider = ({ children }) => {
       return await login('demo@luna-aurea.com', 'demo123');
     }
   }, [login, register]);
-
+//Функция logout()
   const logout = useCallback(() => {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('auth_user');
     setToken(null); setUser(null); setCart([]); setFavorites([]); setOrders([]);
   }, []);
-
-  // ========== КОРЗИНА ==========
 
   const addToCart = useCallback((product) => {
     const normalized = normalizeProduct(product);
@@ -169,8 +163,6 @@ export const AuthProvider = ({ children }) => {
     saveCartToServer(newCart);
   }, [cart, saveCartToServer]);
 
-  // ========== ИЗБРАННОЕ ==========
-
   const addToFavorites = useCallback((product) => {
     const normalized = normalizeProduct(product);
     if (!favorites.some(item => item.id === normalized.id)) {
@@ -193,8 +185,6 @@ export const AuthProvider = ({ children }) => {
     return favorites.some(item => item.id === productId);
   }, [favorites]);
 
-  // ========== ЗАКАЗЫ ==========
-
   const createOrder = useCallback(async (orderData) => {
     if (!token) return null;
     const newOrder = {
@@ -202,10 +192,11 @@ export const AuthProvider = ({ children }) => {
       date: new Date().toLocaleString('ru-RU'),
       items: [...cart],
       total: cart.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0),
-      status: 'processing',
+      status: 'pending',
       address: orderData.address || '',
       phone: orderData.phone || '',
-      payment: orderData.payment || 'card'
+      payment: orderData.payment || 'card',
+      cardNumber: orderData.cardNumber || ''
     };
     const newOrders = [newOrder, ...orders];
     setOrders(newOrders);
@@ -223,13 +214,29 @@ export const AuthProvider = ({ children }) => {
     return newOrder;
   }, [cart, orders, token, saveCartToServer]);
 
-  const cancelOrder = useCallback((orderId) => {
-    setOrders(orders.map(order => order.id === orderId ? { ...order, status: 'cancelled' } : order));
-  }, [orders]);
-
+  const cancelOrder = useCallback(async (orderId) => {
+    if (!token) throw new Error('Не авторизован');
+    try {
+      const response = await fetch(`${API_URL}?route=cancel-order&token=${encodeURIComponent(token)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId })
+      });
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+      setOrders(prevOrders =>
+        prevOrders.map(order =>
+          order.id == orderId ? { ...order, status: 'cancelled' } : order
+        )
+      );
+      return data;
+    } catch (err) {
+      console.error('Ошибка отмены заказа:', err);
+      throw err;
+    }
+  }, [token]);
+//Функция isAuthenticated()
   const isAuthenticated = useCallback(() => !!user && !!token, [user, token]);
-
-  // ========== ЗАГРУЗКА ПРИ СТАРТЕ ==========
 
   useEffect(() => {
     const initAuth = async () => {

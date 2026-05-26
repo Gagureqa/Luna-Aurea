@@ -4,55 +4,76 @@ import { useAuth } from '../context/AuthContext';
 
 const Collections = () => {
   const [collections, setCollections] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('');
   const { addToCart } = useAuth();
 
+  // Метаданные коллекций (название, описание, изображение)
+  const collectionsMeta = {
+    luna: {
+      name: 'Лунная коллекция',
+      description: 'Нежные украшения, вдохновленные лунным светом',
+      image: '/images/luna-collection.jpg'
+    },
+    solaris: {
+      name: 'Солнечная коллекция',
+      description: 'Яркие и энергичные украшения',
+      image: '/images/solar-collection.jpg'
+    },
+    planet: {
+      name: 'Планетарная коллекция',
+      description: 'Космическая элегантность в каждом изделии',
+      image: '/images/planet-collection.jpg'
+    },
+    polarlights: {
+      name: 'Северное сияние',
+      description: 'Завораживающие переливы цветов',
+      image: '/images/polarlights-collection.jpg'
+    }
+  };
+
   useEffect(() => {
-    const mockCollections = [
-      {
-        id: "luna",
-        name: "Лунная коллекция",
-        description: "Нежные украшения, вдохновленные лунным светом",
-        image: "/images/luna-collection.jpg",
-        products: [
-          { id: 1, name: "Серьги Лунное сияние", price: 12500, image: "./images/луна 1.png", category: "earrings" },
-          { id: 2, name: "Кольцо Лунный свет", price: 8900, image: "/images/moonlight1.png", category: "rings" }
-        ]
-      },
-      {
-        id: "solaris",
-        name: "Солнечная коллекция",
-        description: "Яркие и энергичные украшения",
-        image: "/images/solar-collection.jpg",
-        products: [
-          { id: 3, name: "Колье Солнечная энергия", price: 25000, image: "/images/колье1.png", category: "necklaces" },
-          { id: 9, name: "Браслет Золотое сияние", price: 19200, image: "/images/браслетсолар1.jpg", category: "bracelets" },
-          { id: 10, name: "Серьги Белое солнце", price: 19200, image: "/images/серёжкисолар1.jpg", category: "earrings" }
-        ]
-      },
-      {
-        id: "planet",
-        name: "Планетарная коллекция",
-        description: "Космическая элегантность в каждом изделии",
-        image: "/images/planet-collection.jpg",
-        products: [
-          { id: 5, name: "Кольцо Венера", price: 10590, image: "/images/венера1.jpg", category: "rings" },
-          { id: 6, name: "Серьги Марс", price: 15500, image: "/images/марс1.jpg", category: "earrings" },
-          { id: 7, name: "Колье Юпитер", price: 11900, image: "/images/юпитер1.jpg", category: "necklaces" },
-          { id: 8, name: "Браслет Сатурн", price: 11200, image: "/images/сатурн1.jpeg", category: "bracelets" },
-        ]
-      },
-      {
-        id: "polarlights",
-        name: "Северное сияние",
-        description: "Завораживающие переливы цветов",
-        image: "/images/polarlights-collection.jpg",
-        products: [
-          { id: 4, name: "Браслет Северное сияние", price: 11200, image: "/images/браслетик1.png", category: "bracelets" },
-        ]
+    const fetchProductsAndBuildCollections = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch('/api/products.php');
+        const products = await res.json();
+        if (!Array.isArray(products)) {
+          console.error('Неверный формат ответа API');
+          setCollections([]);
+          return;
+        }
+
+        // Группируем товары по коллекциям
+        const grouped = {};
+        products.forEach(product => {
+          const collId = product.collection;
+          if (!collId || !collectionsMeta[collId]) return; // игнорируем товары без коллекции или с неизвестной коллекцией
+          if (!grouped[collId]) {
+            grouped[collId] = [];
+          }
+          grouped[collId].push(product);
+        });
+
+        // Преобразуем группировку в массив объектов коллекций
+        const collectionsArray = Object.entries(grouped).map(([id, products]) => ({
+          id,
+          name: collectionsMeta[id].name,
+          description: collectionsMeta[id].description,
+          image: collectionsMeta[id].image,
+          products: products.sort((a, b) => a.id - b.id) // сортируем по id для стабильности
+        }));
+
+        setCollections(collectionsArray);
+      } catch (err) {
+        console.error('Ошибка загрузки товаров для коллекций:', err);
+        setCollections([]);
+      } finally {
+        setLoading(false);
       }
-    ];
-    setCollections(mockCollections);
+    };
+
+    fetchProductsAndBuildCollections();
   }, []);
 
   const sortedCollections = [...collections].sort((a, b) => {
@@ -60,6 +81,21 @@ const Collections = () => {
     if (sortBy === 'products') return b.products.length - a.products.length;
     return 0;
   });
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-8"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="bg-gray-200 rounded-lg h-96"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
@@ -89,6 +125,7 @@ const Collections = () => {
                   src={collection.image} 
                   alt={collection.name}
                   className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-300"
+                  onError={(e) => { e.target.src = '/images/placeholder-collection.jpg'; }}
                 />
                 <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300" />
               </div>
@@ -123,9 +160,10 @@ const Collections = () => {
                   <div key={product.id} className="text-center">
                     <Link to={`/product/${product.id}`}>
                       <img 
-                        src={product.image} 
+                        src={product.images && product.images[0] ? product.images[0] : '/images/placeholder.jpg'}
                         alt={product.name}
                         className="w-full h-20 object-cover rounded mb-2 hover:opacity-80 transition-opacity"
+                        onError={(e) => { e.target.src = '/images/placeholder.jpg'; }}
                       />
                     </Link>
                     <p className="text-xs font-medium truncate">{product.name}</p>
@@ -148,7 +186,7 @@ const Collections = () => {
         ))}
       </div>
 
-      {collections.length === 0 && (
+      {collections.length === 0 && !loading && (
         <div className="text-center py-12">
           <p className="text-gray-500 text-lg">Коллекции временно недоступны</p>
         </div>

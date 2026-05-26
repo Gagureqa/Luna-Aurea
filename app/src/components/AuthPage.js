@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-
+//Импорт и вызов useAuth()
 const AuthPage = () => {
   const { register, login, quickLogin } = useAuth();
   const navigate = useNavigate();
@@ -27,7 +27,7 @@ const AuthPage = () => {
     setError('');
     setSuccessMessage('');
   };
-
+//Обработчик отправки формы (handleSubmit)
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -72,26 +72,6 @@ const AuthPage = () => {
       
     } catch (err) {
       console.error('Auth error:', err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ✅ Функция быстрого входа тестового пользователя
-  const handleQuickLogin = async () => {
-    setLoading(true);
-    setError('');
-    setSuccessMessage('');
-    
-    try {
-      console.log('Starting quick login...');
-      await quickLogin();
-      setTimeout(() => {
-        navigate('/profile');
-      }, 1000);
-    } catch (err) {
-      console.error('Quick login error:', err);
       setError(err.message);
     } finally {
       setLoading(false);

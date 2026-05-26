@@ -144,7 +144,7 @@ const Home = () => {
                 src={`/images/social${num}.jpg`}
                 alt={`Social inspiration ${num}`}
                 className="w-full h-64 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                onClick={() => window.open('/about', '_blank')}
+                onClick={goToAbout}
               />
             ))}
           </div>

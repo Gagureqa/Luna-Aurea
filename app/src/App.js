@@ -1,4 +1,4 @@
-
+//app/App.js
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ModalProvider } from './context/ModalContext';
@@ -18,7 +18,7 @@ import CancelOrderModal from './components/CancelOrderModal';
 import Collections from './pages/Collections';
 import CollectionDetail from './components/CollectionDetail';
 
-// ✅ Компонент защищенного маршрута
+// Компонент защищенного маршрута
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
   
@@ -47,6 +47,7 @@ function App() {
               <Route path="/product/:id" element={<ProductPage />} />
               <Route path="/contacts" element={<Contacts />} />
               <Route 
+              //ProtectedRoute компонент
                 path="/profile" 
                 element={
                   <ProtectedRoute>

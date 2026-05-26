@@ -16,7 +16,7 @@ const Catalog = () => {
   // База данных товаров (такая же как в ProductPage)
   const allProducts = [
     {
-      id: 1,
+      id: 2,
       name: 'Кольцо Лунный свет',
       price: 8900,
       images: ['/images/moonlight1.png', '/images/moonlight2.png', '/images/moonlight3.png', '/images/moonlight4.png'],
@@ -29,7 +29,7 @@ const Catalog = () => {
       inStock: true
     },
     {
-      id: 2,
+      id: 1,
       name: 'Серьги Лунное сияние',
       price: 12500,
       images: ['/images/луна 1.png', '/images/луна 2.png', '/images/луна 3.png', '/images/луна 4.png'],
@@ -54,7 +54,6 @@ const Catalog = () => {
       collection: 'solaris',
       inStock: true
     },
-    // ... добавьте остальные товары
   ];
 
   // Обработка поискового запроса из URL
@@ -101,13 +100,13 @@ const Catalog = () => {
     }
   };
 
-  // ✅ Функция добавления в корзину
+  //  Функция добавления в корзину
   const handleAddToCart = (product, e) => {
     e.stopPropagation();
     addToCart(product); // Вызываем addToCart, не addToFavorites
   };
 
-  // ✅ Функция добавления в избранное
+  //  Функция добавления в избранное
   const handleAddToFavorites = (product, e) => {
     e.stopPropagation();
     if (!isInFavorites(product.id)) {
@@ -169,7 +168,7 @@ const Catalog = () => {
               onClick={() => navigate('/catalog')}
               className="text-blue-600 hover:text-blue-800 text-sm mt-2"
             >
-              ✕ Очистить поиск
+               Очистить поиск
             </button>
           </div>
         )}

@@ -9,7 +9,7 @@ class ApiClient {
   async request(endpoint, options = {}) {
     // Добавляем ?route= параметр к URL
     const url = `${this.baseURL}?route=${endpoint}`;
-    console.log('📡 Запрос к:', url);
+    console.log(' Запрос к:', url);
     
     const token = localStorage.getItem('auth_token');
     const headers = {

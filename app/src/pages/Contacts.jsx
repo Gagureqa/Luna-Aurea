@@ -1,6 +1,49 @@
-import React from 'react';
+import React, { useState } from 'react';
+import SupportModal from '../components/SupportModal';
 
 const Contacts = ({ onNavigate }) => {
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    message: ''
+  });
+  const [status, setStatus] = useState({ type: '', text: '' });
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSupportOpen, setIsSupportOpen] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setStatus({ type: '', text: '' });
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('/api/send_contact.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...formData, type: 'contact' })
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        setStatus({ type: 'success', text: 'Сообщение успешно отправлено! Мы свяжемся с вами в ближайшее время.' });
+        setFormData({ name: '', phone: '', email: '', message: '' });
+      } else {
+        setStatus({ type: 'error', text: result.error || 'Ошибка отправки. Попробуйте позже.' });
+      }
+    } catch (error) {
+      setStatus({ type: 'error', text: 'Ошибка сети. Проверьте соединение.' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-7xl mx-auto px-4">
@@ -10,6 +53,12 @@ const Contacts = ({ onNavigate }) => {
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Свяжитесь с нами - мы всегда рады помочь вам найти идеальное украшение
           </p>
+          <button
+            onClick={() => setIsSupportOpen(true)}
+            className="mt-4 inline-flex items-center px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <span className="mr-2"><img src="/images/telefon.png" alt="телефон" className="w-7 h-7 flex" /></span> Задать вопрос поддержке
+          </button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
@@ -38,8 +87,7 @@ const Contacts = ({ onNavigate }) => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-800 text-lg">Email</h3>
-                  <p className="text-gray-600">info@luna-aurea.ru</p>
-                  <p className="text-gray-600">order@luna-aurea.ru</p>
+                  <p className="text-gray-600">luna.aureaa@gmail.com</p>
                   <p className="text-sm text-gray-500 mt-1">Ответим в течение 2 часов</p>
                 </div>
               </div>
@@ -84,20 +132,28 @@ const Contacts = ({ onNavigate }) => {
           <div className="bg-white rounded-2xl shadow-lg p-8">
             <h2 className="text-2xl font-serif font-bold text-gray-800 mb-6">Обратная связь</h2>
             
-            <form className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Имя</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Имя *</label>
                   <input
                     type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gold-500 focus:border-transparent"
                     placeholder="Ваше имя"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Телефон</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Телефон *</label>
                   <input
                     type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gold-500 focus:border-transparent"
                     placeholder="+7 (999) 123-45-67"
                   />
@@ -105,50 +161,62 @@ const Contacts = ({ onNavigate }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
                 <input
                   type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gold-500 focus:border-transparent"
                   placeholder="your@email.com"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Сообщение</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Сообщение *</label>
                 <textarea
+                  name="message"
                   rows="4"
+                  value={formData.message}
+                  onChange={handleChange}
+                  required
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gold-500 focus:border-transparent"
                   placeholder="Расскажите, чем мы можем вам помочь..."
                 ></textarea>
               </div>
 
+              {status.text && (
+                <div className={`p-3 rounded-lg text-sm ${
+                  status.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                }`}>
+                  {status.text}
+                </div>
+              )}
+
               <button
                 type="submit"
-                className="w-full bg-gold-600 hover:bg-gold-700 text-white py-4 rounded-lg font-semibold text-lg transition-colors shadow-lg hover:shadow-xl"
+                disabled={isLoading}
+                className="w-full bg-gold-600 hover:bg-gold-700 text-white py-4 rounded-lg font-semibold text-lg transition-colors shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Отправить сообщение
+                {isLoading ? 'Отправка...' : 'Отправить сообщение'}
               </button>
             </form>
           </div>
         </div>
 
         {/* Карта и дополнительная информация */}
-<div className="mt-16 grid grid-cols-1 lg:grid-cols-3 gap-8">
-  {/* Карта */}
-  <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg p-6">
-    <h3 className="text-2xl font-serif font-bold text-gray-800 mb-4">Как нас найти</h3>
-    <div className="bg-gray-200 rounded-lg h-80 flex items-center justify-center overflow-hidden">
-      {/* ✅ Правильный синтаксис для public папки */}
-      <img 
-        src="/images/карта городов.jpg" 
-        alt="Карта расположения наших магазинов" 
-        className="w-full h-full object-cover"
-      />
-    </div>
-  </div>
-
-
-          {/* Время работы */}
+        <div className="mt-16 grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg p-6">
+            <h3 className="text-2xl font-serif font-bold text-gray-800 mb-4">Как нас найти</h3>
+            <div className="bg-gray-200 rounded-lg h-80 flex items-center justify-center overflow-hidden">
+              <img 
+                src="/images/карта городов.jpg" 
+                alt="Карта расположения наших магазинов" 
+                className="w-full h-full object-cover"
+              />
+            </div>
+          </div>
           <div className="bg-white rounded-2xl shadow-lg p-6">
             <h3 className="text-2xl font-serif font-bold text-gray-800 mb-4">Время работы</h3>
             <div className="space-y-4">
@@ -166,8 +234,8 @@ const Contacts = ({ onNavigate }) => {
               </div>
               <div className="mt-6 p-4 bg-gold-50 rounded-lg">
                 <p className="text-sm text-gold-800">
-                  <img src="/images/star.png" alt="примечание" className="w-5 h-5 flex" /> В праздничные дни время работы может меняться. 
-                  Рекомендуем уточнять по телефону.
+                  <img src="/images/star.png" alt="примечание" className="w-5 h-5 inline mr-1" /> 
+                  В праздничные дни время работы может меняться. Рекомендуем уточнять по телефону.
                 </p>
               </div>
             </div>
@@ -201,6 +269,9 @@ const Contacts = ({ onNavigate }) => {
           </div>
         </div>
       </div>
+
+      {/* Модальное окно поддержки */}
+      <SupportModal isOpen={isSupportOpen} onClose={() => setIsSupportOpen(false)} />
     </div>
   );
 };

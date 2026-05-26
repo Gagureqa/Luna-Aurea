@@ -50,7 +50,7 @@ const ProductModal = () => {
     hideModal();
   };
 
-  // ✅ Вспомогательная функция для получения изображения
+  //  Вспомогательная функция для получения изображения
   const getProductImage = (product) => {
     if (!product) return '/images/placeholder.jpg';
     if (product.images && Array.isArray(product.images) && product.images[0]) {
@@ -74,7 +74,7 @@ const ProductModal = () => {
       },
       favorites: {
         title: 'Товар добавлен в избранное!',
-        icon: <img src="/images/Heart.png" alt="Сердечко" className="w-5 h-5 inline mr-2" /> ,
+        icon: <img src="/images/heart.png" alt="Сердечко" className="w-5 h-5 inline mr-2" /> ,
         buttonText: 'Перейти в избранное',
         secondaryButtonText: 'Продолжить покупки',
         onPrimaryClick: handleGoToFavorites,

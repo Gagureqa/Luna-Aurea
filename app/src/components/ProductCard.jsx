@@ -31,7 +31,7 @@ const ProductCard = ({ product, onNavigate }) => {
       className="bg-white rounded-xl shadow-lg overflow-hidden group hover:shadow-2xl transition-all duration-300 border border-gray-100 cursor-pointer"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      onClick={handleCardClick} // ✅✅✅ И ВЫЗОВИТЕ ЗДЕСЬ ✅✅✅
+      onClick={handleCardClick}
     >
       {/* Изображение товара */}
       <div className="relative overflow-hidden">

@@ -15,7 +15,7 @@ const Footer = () => {
     }
   };
 
-  // ✅ Исправленные функции навигации (строчные буквы)
+  //  функции навигации
   const goToCatalog = () => {
     window.location.href = './catalog';
   };

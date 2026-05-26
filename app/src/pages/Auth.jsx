@@ -11,7 +11,7 @@ const Auth = ({ onNavigate }) => {
   });
   const [loading, setLoading] = useState(false);
   const { login, register } = useAuth();
-  const navigate = useNavigate(); // ✅ Добавляем useNavigate
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,11 +25,11 @@ const Auth = ({ onNavigate }) => {
         await register(formData.username, formData.email, formData.password);
       }
       
-      // ✅ Проверяем, что onNavigate существует перед вызовом
+      // Проверяем, что onNavigate существует перед вызовом
       if (onNavigate && typeof onNavigate === 'function') {
         onNavigate('profile');
       } else {
-        // ✅ Используем useNavigate для мгновенной навигации
+        // Используем useNavigate для мгновенной навигации
         navigate('/profile');
       }
     } catch (error) {

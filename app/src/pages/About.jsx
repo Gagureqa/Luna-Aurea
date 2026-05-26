@@ -1,7 +1,7 @@
 import React from 'react';
 
 const About = ({ onNavigate }) => {
-  // ✅ Функция безопасной навигации
+  // Функция безопасной навигации
 
   const goToCatalog = () => {
     window.location.href = './catalog';
